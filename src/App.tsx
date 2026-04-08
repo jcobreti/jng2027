@@ -22,9 +22,7 @@ const COLORS = [
 export default function App() {
   const [cards, setCards] = useState<CardState[]>([]);
   const [evolutionCount, setEvolutionCount] = useState(0);
-  const [pokemonImages, setPokemonImages] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const initGame = () => {
     const shuffled = [...POKEMON_DATA].sort(() => Math.random() - 0.5);
@@ -43,26 +41,19 @@ export default function App() {
   };
 
   useEffect(() => {
-    const loadAssets = async () => {
-      try {
-        setIsLoading(true);
-        // Fetching from public folder is safe from build-time limits
-        const response = await fetch('./pokemonImages.json');
-        if (!response.ok) throw new Error('No se pudieron cargar las imágenes');
-        const data = await response.json();
-        setPokemonImages(data);
+    // Esperamos un momento para asegurar que el script global se ha parseado
+    // aunque al estar antes que el main.tsx ya debería estar listo.
+    const checkAssets = () => {
+      if ((window as any).POKEMON_IMAGES) {
         initGame();
-      } catch (err) {
-        console.error('Error loading assets:', err);
-        setLoadError(err instanceof Error ? err.message : 'Error desconocido');
-        // Fallback to init game even without images so it doesn't stay black
-        initGame();
-      } finally {
         setIsLoading(false);
+      } else {
+        // Reintento rápido por si acaso
+        setTimeout(checkAssets, 100);
       }
     };
 
-    loadAssets();
+    checkAssets();
   }, []);
 
   const handleCardClick = (index: number) => {
@@ -81,12 +72,13 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos imágenes en Base64 cargadas dinámicamente desde un JSON en la carpeta public.
-    // Esto evita:
-    // 1. Límites de tamaño de archivo en el proceso de build (Netlify/Vite).
-    // 2. Corrupción de archivos binarios por el exportador de ZIP.
-    // 3. Bloqueos de proxy al ser recursos locales.
-    return pokemonImages[id.toString()] || null;
+    // Usamos imágenes en Base64 cargadas desde un script global en index.html.
+    // Esta es la forma más robusta:
+    // 1. No usa 'fetch' (evita errores de CORS en local/ZIP).
+    // 2. No tiene límites de build (Netlify/GitHub).
+    // 3. Funciona 100% offline.
+    const images = (window as any).POKEMON_IMAGES || {};
+    return images[id.toString()] || null;
   };
 
   const getPokemonName = (card: CardState) => {
