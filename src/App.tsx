@@ -60,8 +60,8 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Ruta absoluta desde la raíz, que es lo más fiable en el dev server de Vite
-    return `/IMGAGENES/${id}.png`;
+    // Nueva ruta estándar en assets
+    return `/assets/pokemon/${id}.png`;
   };
 
   const getPokemonName = (card: CardState) => {
