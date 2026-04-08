@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCcw, Info, Loader2 } from 'lucide-react';
 import { POKEMON_DATA, type PokemonLine } from './constants';
+import { POKEMON_IMAGES } from './pokemonImages';
 
 interface CardState {
   id: string;
@@ -41,19 +42,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Esperamos un momento para asegurar que el script global se ha parseado
-    // aunque al estar antes que el main.tsx ya debería estar listo.
-    const checkAssets = () => {
-      if ((window as any).POKEMON_IMAGES) {
-        initGame();
-        setIsLoading(false);
-      } else {
-        // Reintento rápido por si acaso
-        setTimeout(checkAssets, 100);
-      }
-    };
-
-    checkAssets();
+    initGame();
+    // Pequeño retardo artificial para que la transición de carga sea suave
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleCardClick = (index: number) => {
@@ -72,13 +64,12 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos imágenes en Base64 cargadas desde un script global en index.html.
-    // Esta es la forma más robusta:
-    // 1. No usa 'fetch' (evita errores de CORS en local/ZIP).
-    // 2. No tiene límites de build (Netlify/GitHub).
-    // 3. Funciona 100% offline.
-    const images = (window as any).POKEMON_IMAGES || {};
-    return images[id.toString()] || null;
+    // Usamos imágenes en Base64 optimizadas (sprites clásicos).
+    // Esto garantiza:
+    // 1. Carga instantánea (archivo de solo 150KB).
+    // 2. Compatibilidad total offline.
+    // 3. Sin errores de compilación en Netlify/GitHub.
+    return POKEMON_IMAGES[id] || null;
   };
 
   const getPokemonName = (card: CardState) => {
