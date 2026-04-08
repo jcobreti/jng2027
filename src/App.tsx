@@ -2,6 +2,21 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCcw, Info } from 'lucide-react';
 import { POKEMON_DATA, type PokemonLine } from './constants';
+import { POKEMON_IMAGES_PART1 } from './pokemonData/part1';
+import { POKEMON_IMAGES_PART2 } from './pokemonData/part2';
+import { POKEMON_IMAGES_PART3 } from './pokemonData/part3';
+import { POKEMON_IMAGES_PART4 } from './pokemonData/part4';
+import { POKEMON_IMAGES_PART5 } from './pokemonData/part5';
+import { POKEMON_IMAGES_PART6 } from './pokemonData/part6';
+
+const POKEMON_IMAGES: Record<number, string> = {
+  ...POKEMON_IMAGES_PART1,
+  ...POKEMON_IMAGES_PART2,
+  ...POKEMON_IMAGES_PART3,
+  ...POKEMON_IMAGES_PART4,
+  ...POKEMON_IMAGES_PART5,
+  ...POKEMON_IMAGES_PART6,
+};
 
 interface CardState {
   id: string;
@@ -60,9 +75,11 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos rutas relativas sin barra inicial para que funcione con el base: './'
-    // Esto es vital para que funcione en subcarpetas de GitHub o localmente.
-    return `pokemon/${id}.png`;
+    // Usamos imágenes en Base64 divididas en varios archivos para:
+    // 1. Evitar que el exportador de ZIP corrompa los archivos binarios locales.
+    // 2. Permitir que funcione sin conexión (offline) en pizarras digitales con proxy.
+    // 3. Evitar errores de compilación en Netlify por archivos demasiado grandes.
+    return POKEMON_IMAGES[id] || null;
   };
 
   const getPokemonName = (card: CardState) => {
