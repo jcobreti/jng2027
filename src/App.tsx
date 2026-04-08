@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCcw, Info } from 'lucide-react';
 import { POKEMON_DATA, type PokemonLine } from './constants';
+import { POKEMON_IMAGES } from './pokemonImages';
 
 interface CardState {
   id: string;
@@ -60,8 +61,10 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Nueva ruta estándar en assets
-    return `/assets/pokemon/${id}.png`;
+    // Usamos imágenes en Base64 incrustadas en el código para:
+    // 1. Evitar que el exportador de ZIP corrompa los archivos binarios locales.
+    // 2. Permitir que funcione sin conexión (offline) en pizarras digitales con proxy.
+    return POKEMON_IMAGES[id] || null;
   };
 
   const getPokemonName = (card: CardState) => {
