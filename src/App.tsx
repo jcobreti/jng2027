@@ -60,9 +60,9 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos extensión .bin para engañar al exportador de ZIP y que no corrompa los archivos.
-    // El navegador los leerá perfectamente como imágenes PNG.
-    return `/p/${id}.bin`;
+    // Usamos rutas relativas sin barra inicial para que funcione con el base: './'
+    // Esto es vital para que funcione en subcarpetas de GitHub o localmente.
+    return `pokemon/${id}.png`;
   };
 
   const getPokemonName = (card: CardState) => {
