@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCcw, Info } from 'lucide-react';
 import { POKEMON_DATA, type PokemonLine } from './constants';
-import { POKEMON_IMAGES } from './pokemonImages';
 
 interface CardState {
   id: string;
@@ -61,10 +60,9 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos imágenes en Base64 incrustadas en el código para:
-    // 1. Evitar que el exportador de ZIP corrompa los archivos binarios locales.
-    // 2. Permitir que funcione sin conexión (offline) en pizarras digitales con proxy.
-    return POKEMON_IMAGES[id] || null;
+    // Usamos extensión .bin para engañar al exportador de ZIP y que no corrompa los archivos.
+    // El navegador los leerá perfectamente como imágenes PNG.
+    return `/p/${id}.bin`;
   };
 
   const getPokemonName = (card: CardState) => {
@@ -76,7 +74,7 @@ export default function App() {
     <div className="flex h-screen w-screen bg-[#121212] text-white overflow-hidden font-sans">
       <div className="flex-1 flex flex-col p-4 bg-[#1a1a1a]">
         {/* Grid Container */}
-        <div className="flex-1 grid grid-cols-6 grid-rows-4 gap-3">
+        <div className="flex-1 grid grid-cols-6 grid-rows-4 gap-2 md:gap-3 h-full overflow-hidden">
           {cards.map((card, index) => (
             <motion.div
               key={card.id}
@@ -86,9 +84,9 @@ export default function App() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleCardClick(index)}
-              className={`relative flex items-center justify-center cursor-pointer rounded-lg border-3 transition-colors duration-300 overflow-hidden h-full w-full
+              className={`relative flex items-center justify-center cursor-pointer rounded-lg border-2 md:border-3 transition-colors duration-300 overflow-hidden h-full w-full
                 ${card.stage === 0 ? 'bg-[#2a2a2a]' : 'bg-white'}
-                ${card.stage === 3 ? 'animate-pulse shadow-[0_0_15px_rgba(255,215,0,0.8)] bg-[#fffde7]' : ''}
+                ${card.stage === 3 ? 'animate-pulse shadow-[0_0_10px_rgba(255,215,0,0.6)] bg-[#fffde7]' : ''}
               `}
               style={{ borderColor: card.stage === 3 ? '#ffd700' : card.borderColor }}
             >
@@ -99,7 +97,7 @@ export default function App() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="text-3xl font-bold text-[#444]"
+                    className="text-2xl md:text-3xl font-bold text-[#444]"
                   >
                     ?
                   </motion.div>
@@ -110,15 +108,17 @@ export default function App() {
                     animate={{ opacity: 1, rotateY: 0 }}
                     exit={{ opacity: 0, rotateY: -90 }}
                     transition={{ duration: 0.3 }}
-                    className="flex flex-col items-center justify-center w-full h-full p-2"
+                    className="flex flex-col items-center justify-center w-full h-full p-1 md:p-2 relative"
                   >
-                    <img
-                      src={getPokemonImage(card) || ''}
-                      alt={getPokemonName(card)}
-                      className="max-w-[98%] max-h-[98%] object-contain"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className={`absolute bottom-1 left-1 right-1 py-1 rounded bg-white/90 text-[10px] font-black text-center uppercase pointer-events-none
+                    <div className="flex-1 w-full flex items-center justify-center min-h-0">
+                      <img
+                        src={getPokemonImage(card) || ''}
+                        alt={getPokemonName(card)}
+                        className="max-w-full max-h-full object-contain pointer-events-none"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className={`absolute bottom-0 left-0 right-0 py-0.5 md:py-1 bg-white/95 text-[8px] md:text-[10px] font-black text-center uppercase pointer-events-none border-t border-gray-100
                       ${card.stage === 1 ? 'text-green-600' : ''}
                       ${card.stage === 2 ? 'text-orange-500' : ''}
                       ${card.stage === 3 ? 'text-red-600' : 'text-black'}
