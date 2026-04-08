@@ -1,0 +1,5 @@
+{
+  "name": "PokeEvolve Grid",
+  "description": "A Pokemon evolution grid game with 4 rows and local images.",
+  "requestFramePermissions": []
+}
