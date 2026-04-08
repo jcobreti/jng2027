@@ -1,22 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RefreshCcw, Info } from 'lucide-react';
+import { RefreshCcw, Info, Loader2 } from 'lucide-react';
 import { POKEMON_DATA, type PokemonLine } from './constants';
-import { POKEMON_IMAGES_PART1 } from './pokemonData/part1';
-import { POKEMON_IMAGES_PART2 } from './pokemonData/part2';
-import { POKEMON_IMAGES_PART3 } from './pokemonData/part3';
-import { POKEMON_IMAGES_PART4 } from './pokemonData/part4';
-import { POKEMON_IMAGES_PART5 } from './pokemonData/part5';
-import { POKEMON_IMAGES_PART6 } from './pokemonData/part6';
-
-const POKEMON_IMAGES: Record<number, string> = {
-  ...POKEMON_IMAGES_PART1,
-  ...POKEMON_IMAGES_PART2,
-  ...POKEMON_IMAGES_PART3,
-  ...POKEMON_IMAGES_PART4,
-  ...POKEMON_IMAGES_PART5,
-  ...POKEMON_IMAGES_PART6,
-};
 
 interface CardState {
   id: string;
@@ -37,6 +22,9 @@ const COLORS = [
 export default function App() {
   const [cards, setCards] = useState<CardState[]>([]);
   const [evolutionCount, setEvolutionCount] = useState(0);
+  const [pokemonImages, setPokemonImages] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const initGame = () => {
     const shuffled = [...POKEMON_DATA].sort(() => Math.random() - 0.5);
@@ -55,8 +43,26 @@ export default function App() {
   };
 
   useEffect(() => {
-    console.log('PokeEvolve App Mounted');
-    initGame();
+    const loadAssets = async () => {
+      try {
+        setIsLoading(true);
+        // Fetching from public folder is safe from build-time limits
+        const response = await fetch('./pokemonImages.json');
+        if (!response.ok) throw new Error('No se pudieron cargar las imágenes');
+        const data = await response.json();
+        setPokemonImages(data);
+        initGame();
+      } catch (err) {
+        console.error('Error loading assets:', err);
+        setLoadError(err instanceof Error ? err.message : 'Error desconocido');
+        // Fallback to init game even without images so it doesn't stay black
+        initGame();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAssets();
   }, []);
 
   const handleCardClick = (index: number) => {
@@ -75,17 +81,34 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos imágenes en Base64 divididas en varios archivos para:
-    // 1. Evitar que el exportador de ZIP corrompa los archivos binarios locales.
-    // 2. Permitir que funcione sin conexión (offline) en pizarras digitales con proxy.
-    // 3. Evitar errores de compilación en Netlify por archivos demasiado grandes.
-    return POKEMON_IMAGES[id] || null;
+    // Usamos imágenes en Base64 cargadas dinámicamente desde un JSON en la carpeta public.
+    // Esto evita:
+    // 1. Límites de tamaño de archivo en el proceso de build (Netlify/Vite).
+    // 2. Corrupción de archivos binarios por el exportador de ZIP.
+    // 3. Bloqueos de proxy al ser recursos locales.
+    return pokemonImages[id.toString()] || null;
   };
 
   const getPokemonName = (card: CardState) => {
     if (card.stage === 0) return '';
     return card.stage === 1 ? card.pokemon.etapa1 : card.stage === 2 ? card.pokemon.etapa2 : card.pokemon.etapa3;
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen bg-[#121212] flex flex-col items-center justify-center text-white font-sans">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="mb-6"
+        >
+          <Loader2 size={48} className="text-[#ffd700]" />
+        </motion.div>
+        <h2 className="text-xl font-medium tracking-tight mb-2">Preparando Pokédex...</h2>
+        <p className="text-gray-500 text-sm">Cargando datos de evolución offline</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen bg-[#121212] text-white overflow-hidden font-sans">
