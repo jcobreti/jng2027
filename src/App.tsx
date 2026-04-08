@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCcw, Info, Loader2 } from 'lucide-react';
 import { POKEMON_DATA, type PokemonLine } from './constants';
-import { POKEMON_IMAGES } from './pokemonImages';
 
 interface CardState {
   id: string;
@@ -42,10 +41,18 @@ export default function App() {
   };
 
   useEffect(() => {
-    initGame();
-    // Pequeño retardo artificial para que la transición de carga sea suave
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    // Esperamos a que los scripts de imágenes se carguen
+    const checkImages = () => {
+      const win = window as any;
+      if (win.POKEMON_IMAGES && Object.keys(win.POKEMON_IMAGES).length > 0) {
+        initGame();
+        setIsLoading(false);
+      } else {
+        setTimeout(checkImages, 100);
+      }
+    };
+    
+    checkImages();
   }, []);
 
   const handleCardClick = (index: number) => {
@@ -64,12 +71,10 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos imágenes en Base64 optimizadas (sprites clásicos).
-    // Esto garantiza:
-    // 1. Carga instantánea (archivo de solo 150KB).
-    // 2. Compatibilidad total offline.
-    // 3. Sin errores de compilación en Netlify/GitHub.
-    return POKEMON_IMAGES[id] || null;
+    // Usamos imágenes de alta resolución (Official Artwork) cargadas desde scripts globales.
+    // Al estar divididas en partes, evitamos errores de memoria y build.
+    const images = (window as any).POKEMON_IMAGES || {};
+    return images[id.toString()] || null;
   };
 
   const getPokemonName = (card: CardState) => {
@@ -131,13 +136,13 @@ export default function App() {
                     animate={{ opacity: 1, rotateY: 0 }}
                     exit={{ opacity: 0, rotateY: -90 }}
                     transition={{ duration: 0.3 }}
-                    className="flex flex-col items-center justify-center w-full h-full p-1 md:p-2 relative"
+                    className="flex flex-col items-center justify-center w-full h-full p-0.5 relative"
                   >
                     <div className="flex-1 w-full flex items-center justify-center min-h-0">
                       <img
                         src={getPokemonImage(card) || ''}
                         alt={getPokemonName(card)}
-                        className="max-w-full max-h-full object-contain pointer-events-none"
+                        className="w-full h-full object-contain pointer-events-none scale-110"
                         referrerPolicy="no-referrer"
                       />
                     </div>
