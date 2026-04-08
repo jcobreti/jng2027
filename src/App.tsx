@@ -58,7 +58,7 @@ export default function App() {
   const getPokemonImage = (card: CardState) => {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
-    // Usamos ruta relativa para máxima compatibilidad en Netlify
+    // Usamos ruta relativa sin barra inicial para que funcione con el base path de GitHub Pages
     return `IMGAGENES/${id}.png`;
   };
 
