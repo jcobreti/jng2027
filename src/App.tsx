@@ -41,10 +41,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Esperamos a que los scripts de imágenes se carguen
+    // Esperamos a que todos los scripts de imágenes se carguen (72 imágenes en total)
     const checkImages = () => {
       const win = window as any;
-      if (win.POKEMON_IMAGES && Object.keys(win.POKEMON_IMAGES).length > 0) {
+      if (win.POKEMON_IMAGES && Object.keys(win.POKEMON_IMAGES).length >= 72) {
         initGame();
         setIsLoading(false);
       } else {
@@ -71,8 +71,8 @@ export default function App() {
     if (card.stage === 0) return null;
     const id = card.stage === 1 ? card.pokemon.id1 : card.stage === 2 ? card.pokemon.id2 : card.pokemon.id3;
     
-    // Usamos imágenes de alta resolución (Official Artwork) cargadas desde scripts globales.
-    // Al estar divididas en partes, evitamos errores de memoria y build.
+    // Usamos imágenes "home" de alta calidad divididas en 12 partes.
+    // Esta fragmentación extrema asegura que GitHub Pages y Netlify carguen todo sin errores.
     const images = (window as any).POKEMON_IMAGES || {};
     return images[id.toString()] || null;
   };
